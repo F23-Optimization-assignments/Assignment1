@@ -154,7 +154,7 @@ private:
 public:
     explicit VectorException(const char* msg) : std::exception(), msg(msg) { }
     [[nodiscard]] const char * what() const noexcept override {
-            return msg;
+        return msg;
     }
 };
 
@@ -177,7 +177,7 @@ private:
 public:
     explicit SimplexException(const char* msg) : std::exception(), msg(msg) { }
     [[nodiscard]] const char * what() const noexcept override {
-            return msg;
+        return msg;
     }
 };
 
@@ -188,7 +188,7 @@ private:
 public:
     explicit MatrixException(const char* msg) : std::exception(), msg(msg) { }
     [[nodiscard]] const char * what() const noexcept override {
-            return msg;
+        return msg;
     }
 };
 
@@ -394,8 +394,8 @@ private:
         for (size_t idx = 0; idx < A.get_columns(); ++idx) {
             A[pivot_row][idx] /= pivot;
         }
-        basic_indices[pivot_col] = pivot_col;
-        basic_coeffs[pivot_col] = func[pivot_col];
+        basic_indices[pivot_row] = pivot_col;
+        basic_coeffs[pivot_row] = func[pivot_col];
     }
 
     void update_constraints_values(size_t pivot_row, size_t pivot_col) {
@@ -514,4 +514,30 @@ int main() {
 24 22 10
 
 3 4 5
+ */
+
+//Other example, answer = -17
+/*
+6 2
+-6 -8 -5 -9 0 0
+
+2 1 1 3 1 0
+1 3 1 2 0 1
+
+5 3
+4 5
+ */
+
+//Ans = -2
+/*
+6 4
+-2 -1 0 0 0 0
+
+2 1 1 0 0 0
+2 3 0 1 0 0
+4 1 0 0 1 0
+1 5 0 0 0 1
+
+4 3 5 1
+2 3 4 5
  */
