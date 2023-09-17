@@ -6,6 +6,55 @@
 #include "vector_ops.h"
 
 template<typename T>
+class Solution {
+private:
+    bool final;
+    bool unbounded;
+    T optimum;
+    std::vector<T> xs;
+
+    template<class U>
+    friend std::ostream& operator<<(std::ostream&, const Solution<U>&);
+public:
+    Solution(bool isFinal,
+             bool isUnbounded,
+             T optimum,
+             const std::vector<T>& xs) :
+            final(isFinal), unbounded(isUnbounded), optimum(optimum), xs(xs) {}
+    explicit Solution(const bool unbounded) : unbounded(unbounded), final(true) {}
+    Solution() : final(false), unbounded(false) { };
+
+    [[nodiscard]] bool is_final() const {
+        return final;
+    }
+
+    [[nodiscard]] bool is_unbounded() const {
+        return unbounded;
+    }
+
+    [[ nodiscard ]] std::vector<T> get_vector() const {
+        return xs;
+    }
+
+    [[ nodiscard ]] T get_optimum() const {
+        return optimum;
+    }
+};
+
+template<class U>
+std::ostream& operator<<(std::ostream& stream, const Solution<U>& solution) {
+    if (solution.unbounded) {
+        return (stream << "Solution is unbounded!\n");
+    }
+    stream << (solution.final ? "[ FINAL ]\n" : "[ NOT FINAL ]\n");
+    stream << "Optimum is " << solution.optimum << '\n';
+    for (size_t idx = 0; idx < solution.xs.size(); ++idx) {
+        stream << "X_" << idx << " = " << solution.xs[idx] << '\n';
+    }
+    return stream;
+}
+
+template<typename T>
 class Simplex {
 private:
     std::vector<T> func;
@@ -95,36 +144,36 @@ private:
         }
     }
 
-    bool iterate()  {
+    [[nodiscard]] T function_value() const {
+        return dot_product(b, basic_coeffs);
+    }
+
+    [[ nodiscard ]] std::vector<T> vector_value() const {
+        std::vector<T> vars(func.size());
+        for (size_t idx = 0; idx < basic_indices.size(); ++idx) {
+            vars[basic_indices[idx]] = b[idx];
+        }
+        return vars;
+    }
+
+    Solution<T> iterate()  {
         // TODO: may be additional checks?
         auto delta = find_delta();
         auto col_opt = find_pivot_col(delta);
         if (!col_opt) {
-            return false; // final solution, no way to optimize
+            return Solution<T>(true, false, function_value(), vector_value());
         }
         size_t pivot_col = col_opt.value();
         auto row_opt = find_pivot_row(col_opt.value());
         if (!row_opt) {
-            return false; // final solution, unbounded
+            return Solution<T>(true);
         }
         size_t pivot_row = row_opt.value();
         update_pivot_row(pivot_row, pivot_col);
         update_constraints_values(pivot_row, pivot_col);
         update_other_rows(pivot_row, pivot_col);
         update_pivot_column(pivot_row, pivot_col);
-        return true;
-    }
-
-    [[nodiscard]] T function_value() const {
-        return dot_product(b, basic_coeffs);
-    }
-
-    void print_solution() const {
-        std::cout << "Optimum is " << function_value() << '\n';
-        for (size_t idx = 0; idx < basic_indices.size(); ++idx) {
-            std::cout << "Variable x_" << basic_indices[idx] << " is " << b[idx] << '\n';
-        }
-        std::cout << "Others are zeros.\n";
+        return Solution<T>(false, false, function_value(), vector_value());
     }
 public:
     Simplex(const std::vector<T>& coefficients,
@@ -140,9 +189,12 @@ public:
         basic_coeffs.shrink_to_fit();
     }
 
-    void find_solution() {
-        while (iterate());
-        print_solution();
+    Solution<T> find_solution() {
+        Solution<T> solution;
+        do {
+            solution = iterate();
+        } while (!solution.is_final());
+        return solution;
     }
 };
 
