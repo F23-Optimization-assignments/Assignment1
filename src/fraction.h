@@ -1,7 +1,3 @@
-//
-// Created by Matvey Korinenko on 16.09.2023.
-//
-
 #ifndef ASSIGNMENT1_FRACTION_H
 #define ASSIGNMENT1_FRACTION_H
 
@@ -147,6 +143,12 @@ std::ostream& operator<<(std::ostream& stream, const Fraction& fraction) {
     return stream << fraction.p << '/' << fraction.q;
 }
 
+/**
+ * Read fraction as integer number
+ * @param stream input
+ * @param fraction fraction to input
+ * @return updated input
+ */
 std::istream& operator>>(std::istream& stream, Fraction& fraction) {
     stream >> fraction.p;
     fraction.q = 1;

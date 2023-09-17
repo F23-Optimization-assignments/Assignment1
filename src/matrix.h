@@ -1,7 +1,3 @@
-//
-// Created by Matvey Korinenko on 16.09.2023.
-//
-
 #ifndef ASSIGNMENT1_MATRIX_H
 #define ASSIGNMENT1_MATRIX_H
 

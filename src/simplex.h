@@ -1,19 +1,9 @@
-#include <iostream>
-#include <vector>
+#ifndef ASSIGNMENT1_SIMPLEX_H
+#define ASSIGNMENT1_SIMPLEX_H
 
-#include "fraction.h"
+#include <optional>
 #include "matrix.h"
 #include "vector_ops.h"
-
-class SimplexException : public std::exception {
-private:
-    const char* msg;
-public:
-    explicit SimplexException(const char* msg) : std::exception(), msg(msg) { }
-    [[nodiscard]] const char * what() const noexcept override {
-        return msg;
-    }
-};
 
 template<typename T>
 class Simplex {
@@ -36,37 +26,30 @@ private:
         return delta_row;
     }
 
-    [[nodiscard]] size_t find_pivot_col(const std::vector<T>& v) const {
-        size_t max_idx = 0;
-        for (size_t idx = 1; idx < v.size(); ++idx) {
-            if (v[idx] > v[max_idx]) {
+    [[nodiscard]] std::optional<size_t> find_pivot_col(const std::vector<T>& v) const {
+        std::optional<size_t> max_idx;
+        for (size_t idx = 0; idx < v.size(); ++idx) {
+            if (v[idx] > 0 && (!max_idx || v[max_idx.value()] < v[idx])) {
                 max_idx = idx;
             }
         }
         return max_idx;
     }
 
-    [[nodiscard]] size_t find_pivot_row(size_t col) const {
-        bool found = false;
-        size_t row_idx = 0;
+    [[nodiscard]] std::optional<size_t> find_pivot_row(size_t col) const {
+        std::optional<size_t> pivot_row;
         T best_ratio;
         for (size_t row = 0; row < A.get_rows(); ++row) {
             auto ratio = b[row] / A[row][col];
-            if (ratio <= 0) { // TODO: check!
+            if (ratio <= 0) {
                 continue;
             }
-            if (!found) {
-                found = true;
-                row_idx = row;
+            if (!pivot_row || ratio < best_ratio) {
+                pivot_row = row;
                 best_ratio = ratio;
-            } else if (ratio < best_ratio) {
-                row_idx = row;
             }
         }
-        if (!found) {
-            throw SimplexException("did not found positive ratio pivot");
-        }
-        return row_idx;
+        return pivot_row;
     }
 
     void update_pivot_row(size_t pivot_row, size_t pivot_col)  {
@@ -113,12 +96,18 @@ private:
     }
 
     bool iterate()  {
+        // TODO: may be additional checks?
         auto delta = find_delta();
-        auto pivot_col = find_pivot_col(delta);
-        if (delta[pivot_col] <= 0) {
-            return false;
+        auto col_opt = find_pivot_col(delta);
+        if (!col_opt) {
+            return false; // final solution, no way to optimize
         }
-        auto pivot_row = find_pivot_row(pivot_col);
+        size_t pivot_col = col_opt.value();
+        auto row_opt = find_pivot_row(col_opt.value());
+        if (!row_opt) {
+            return false; // final solution, unbounded
+        }
+        size_t pivot_row = row_opt.value();
         update_pivot_row(pivot_row, pivot_col);
         update_constraints_values(pivot_row, pivot_col);
         update_other_rows(pivot_row, pivot_col);
@@ -148,6 +137,7 @@ public:
         for (const size_t& idx : basic_indices) {
             basic_coeffs.push_back(func[idx]);
         }
+        basic_coeffs.shrink_to_fit();
     }
 
     void find_solution() {
@@ -156,69 +146,4 @@ public:
     }
 };
 
-int main() {
-    size_t vars, cons;
-    std::cin >> vars >> cons;
-
-    std::vector<Fraction> coeffs(vars);
-    for (auto& i : coeffs) {
-        std::cin >> i;
-    }
-
-    Matrix<Fraction> m(cons, vars);
-    std::cin >> m;
-
-
-    std::vector<Fraction> b(cons);
-    for (auto& i : b) {
-        std::cin >> i;
-    }
-
-    std::vector<size_t> basic(cons);
-    for (auto& i : basic) {
-        std::cin >> i;
-    }
-    Simplex<Fraction> simplex(coeffs, m, b, basic);
-    simplex.find_solution();
-}
-
-// Zlata's Lab Sample
-/**
-6 3
-
--2 3 -6 -1 0 0
-
-2 1 -2 1 0 0
-1 2 4 0 1 0
-1 -1 2 0 0 1
-
-24 22 10
-
-3 4 5
- */
-
-//Other example, answer = -17
-/*
-6 2
--6 -8 -5 -9 0 0
-
-2 1 1 3 1 0
-1 3 1 2 0 1
-
-5 3
-4 5
- */
-
-//Ans = -2
-/*
-6 4
--2 -1 0 0 0 0
-
-2 1 1 0 0 0
-2 3 0 1 0 0
-4 1 0 0 1 0
-1 5 0 0 0 1
-
-4 3 5 1
-2 3 4 5
- */
+#endif //ASSIGNMENT1_SIMPLEX_H
