@@ -89,6 +89,9 @@ private:
         std::optional<size_t> pivot_row;
         T best_ratio;
         for (size_t row = 0; row < A.get_rows(); ++row) {
+            if (A[row][col] == 0) {
+                continue;
+            }
             auto ratio = b[row] / A[row][col];
             if (ratio <= 0) {
                 continue;
