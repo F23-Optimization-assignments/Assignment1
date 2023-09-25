@@ -4,24 +4,17 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <numeric>
 
 class Fraction {
 private:
     int p, q;
 
-    [[nodiscard]] int gcd(int a, int b) const {
-        return (b == 0 ? a : gcd(b, a % b));
-    }
-
-    [[ nodiscard ]] int lcm(int a, int b) const {
-        return a / gcd(a, b) * b;
-    }
-
     void simplify() {
         bool sign = (p < 0) ^ (q < 0);
         p = std::abs(p);
         q = std::abs(q);
-        int g = gcd(p, q);
+        int g = std::gcd(p, q);
         p /= g;
         q /= g;
         p *= (sign ? -1 : 1);
@@ -60,7 +53,7 @@ public:
     }
 
     Fraction& operator+=(const Fraction& other) {
-        int l = lcm(q, other.q);
+        int l = std::lcm(q, other.q);
         int mp = l / q;
         p *= mp;
         q *= mp;
@@ -75,7 +68,7 @@ public:
     }
 
     Fraction& operator-=(const Fraction& other) {
-        int l = lcm(q, other.q);
+        int l = std::lcm(q, other.q);
         int mp = l / q;
         p *= mp;
         q *= mp;
@@ -94,7 +87,7 @@ public:
     }
 
     bool operator<(const Fraction& other) const {
-        int l = lcm(q, other.q);
+        int l = std::lcm(q, other.q);
         int lp = p * (l / q), rp = other.p * (l / other.q);
         return lp < rp;
     }
