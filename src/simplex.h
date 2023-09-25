@@ -21,7 +21,7 @@ public:
              T optimum,
              const std::vector<T>& xs) :
             final(isFinal), unbounded(isUnbounded), optimum(optimum), xs(xs) {}
-    explicit Solution(const bool unbounded) : unbounded(unbounded), final(true) {}
+    explicit Solution(const bool unbounded) : final(true), unbounded(unbounded) {}
     Solution() : final(false), unbounded(false) { };
 
     [[nodiscard]] bool is_final() const {
