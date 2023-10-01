@@ -37,6 +37,36 @@ int main() {
     std::cout << simplex.find_solution();
 }
 
+// Ex. Test1: Incorrect number of basic variables
+/**
+6 3
+
+-2 3 -6 -1 0 0
+
+2 1 -2 0 0 0
+1 2 4 0 1 0
+1 -1 2 0 0 1
+
+24 22 10
+
+3 4 5
+*/
+
+// Ex. Test2: Incorrect index of the base variable
+/**
+6 3
+
+-2 3 -6 -1 0 0
+
+2 1 -2 2 0 0
+1 0 4 0 1 0
+1 0 2 0 0 1
+
+24 22 10
+
+3 4 5
+*/
+
 // Ex. 1 : Zlata's Lab Sample
 // Answer = -64
 /**

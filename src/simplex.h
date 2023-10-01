@@ -3,7 +3,78 @@
 
 #include <optional>
 #include "matrix.h"
+#include "algorithm"
 #include "vector_ops.h"
+
+#define MALFORMED_INPUT 0
+#define DEGENERACY 1
+#define ALTERNATIVE_OPTIMA 2
+#define UNBOUNDED 3
+
+class ValidationReport {
+private:
+    bool OK;
+    // 1 - Degeneracy; 2 - Alternative Optima; 3 - Unbounded Solution;
+    // 0 - Incorrect Input (Mismatch number of base vars.)
+    int specialCaseNum;
+    std::vector<size_t> incorrectVars;
+
+    friend std::ostream& operator<<(std::ostream&, const ValidationReport&);
+public:
+    ValidationReport(bool isOK,
+                     int specialCase,
+                     const std::vector<size_t>& incorrectVars) :
+                     OK(isOK), specialCaseNum(specialCase), incorrectVars(incorrectVars) {}
+
+    [[nodiscard]] bool is_OK() const {
+        return OK;
+    }
+
+    [[nodiscard]] int specialCase() const {
+        return specialCaseNum;
+    }
+
+    [[ nodiscard ]] std::vector<size_t> get_incorrectVars() const {
+        return incorrectVars;
+    }
+};
+
+std::ostream& operator<<(std::ostream& stream, const ValidationReport& report) {
+    if (report.is_OK()) {
+        return (stream << "");
+    }
+
+    if (report.specialCaseNum == MALFORMED_INPUT) {
+        stream << ("There are incorrect base variables. Recheck the columns of variables.\n");
+
+        stream << "Found basic variables: ";
+        for (unsigned long long incorrectVar : report.incorrectVars) {
+            stream << "X_" << incorrectVar << "; ";
+        }
+        stream << std::endl;
+
+        return stream;
+    }
+
+    stream << ("[ SPECIAL CASE ]\n");
+
+    switch (report.specialCase()) {
+        case DEGENERACY: stream << ("There is a tie for a minimum ratio, which can increase the infinite loop.\n");
+        case ALTERNATIVE_OPTIMA: stream << ("One of the constraints is in parallel with the objective function. "
+                                            "There are a lot of solutions (points) to the given problem.\n");
+        case UNBOUNDED: stream << ("Can be increased or decreased infinitely (without violating "
+                                   "any constraint. An unbounded objective function.\n");
+        default: stream << ("Something went wrong in the output.\n");
+    }
+
+
+    stream << "Affected variables:\n";
+    for (unsigned long long incorrectVar : report.incorrectVars) {
+        stream << "X_" << incorrectVar << "; ";
+    }
+    stream << std::endl;
+    return stream;
+}
 
 template<typename T>
 class Solution {
@@ -57,14 +128,65 @@ std::ostream& operator<<(std::ostream& stream, const Solution<U>& solution) {
 template<typename T>
 class Simplex {
 private:
+    bool isCorrectInput;
     std::vector<T> func;
     Matrix<T> A;
     std::vector<T> b;
     std::vector<size_t> basic_indices;
     std::vector<T> basic_coeffs;
 
-    void validate() const {
-        // TODO: implement
+    void validateOnStart() {
+        std::vector<size_t> checkedBaseVars;
+
+        for (size_t idx = 0; idx < A.get_columns(); idx++) {
+            std::vector<T> temp = A.get_column(idx);
+
+            bool takenOne = false;
+            bool isBaseVar = true;
+            for (T num : temp) {
+                if (num == 1 && !takenOne) {
+                    takenOne = true;
+                    continue;
+                }
+
+                if (num != 0) {
+                    isBaseVar = false;
+                    break;
+                }
+            }
+
+            if (isBaseVar && takenOne) checkedBaseVars.push_back(idx);
+        }
+
+        if (checkedBaseVars.size() < basic_indices.size()) {
+            isCorrectInput = false;
+            std::cout << ValidationReport(isCorrectInput, MALFORMED_INPUT, checkedBaseVars);
+            printBasicIndices();
+
+            return;
+        }
+
+        std::sort(basic_indices.begin(), basic_indices.end());
+
+        std::vector<size_t> incorrectVars;
+        for (unsigned long long baseVar : basic_indices) {
+            bool isThere = false;
+            for (size_t num : checkedBaseVars) {
+                if (baseVar == num) {
+                    isThere = true;
+                }
+            }
+
+            if (!isThere) {
+                isCorrectInput = false;
+                incorrectVars.push_back(baseVar);
+            }
+        }
+
+        if (!isCorrectInput) {
+            std::cout << ValidationReport(isCorrectInput, MALFORMED_INPUT, incorrectVars);
+            printBasicIndices();
+        }
     }
 
     [[nodiscard]] std::vector<T> find_delta() const {
@@ -159,8 +281,19 @@ private:
         return vars;
     }
 
+    void printBasicIndices() {
+        std::cout << "Your basic variables: ";
+        for (size_t inx : basic_indices) {
+            std::cout << "X_" << inx << "; ";
+        }
+        std::cout << std::endl;
+    }
+
     Solution<T> iterate()  {
-        // TODO: may be additional checks?
+        if (!isCorrectInput) {
+            // TODO: Correctly process the given information about incorrect input
+        }
+
         auto delta = find_delta();
         auto col_opt = find_pivot_col(delta);
         if (!col_opt) {
@@ -185,7 +318,8 @@ public:
             const std::vector<size_t>& basic_indices) : func(
             coefficients), A(A), b(b), basic_indices(
             basic_indices), basic_coeffs() {
-        validate();
+        isCorrectInput = true;
+        validateOnStart();
         for (const size_t& idx : basic_indices) {
             basic_coeffs.push_back(func[idx]);
         }
