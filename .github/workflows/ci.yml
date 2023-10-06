@@ -13,10 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up CMake
-        uses: actions/setup-cmake@v2
-        with:
-          cmake-version: 3.26
+      - name: Install CMake
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake
 
       - name: Build and run tests
         run: |
@@ -25,4 +25,3 @@ jobs:
           cmake ..
           make
           ctest -V
-
