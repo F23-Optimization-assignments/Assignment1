@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - impl/testing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up CMake
+        uses: actions/setup-cmake@v2
+        with:
+          cmake-version: 3.26
+
+      - name: Build and run tests
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+          ctest -V
+
