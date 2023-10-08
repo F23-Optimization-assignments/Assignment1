@@ -25,7 +25,7 @@ private:
 
 public:
     Fraction(int p, int q) : p(p), q(q) { simplify(); }
-    explicit Fraction(int p) : Fraction(p, 1) { }
+    Fraction(int p) : Fraction(p, 1) { }
     Fraction() : Fraction(0) { }
 
     Fraction& operator*=(const Fraction& other) {
