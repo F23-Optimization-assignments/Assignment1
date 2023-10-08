@@ -49,8 +49,8 @@ std::ostream &operator<<(std::ostream &stream, const ValidationReport &report) {
         stream << ("There are incorrect base variables. Recheck the columns of variables.\n");
 
         stream << "Found basic variables: ";
-        for (size_t incorrectVar: report.incorrect_vars) {
-            stream << "X_" << incorrectVar << "; ";
+        for (size_t incorrect_var: report.incorrect_vars) {
+            stream << "X_" << incorrect_var << "; ";
         }
         stream << std::endl;
 
@@ -77,8 +77,8 @@ std::ostream &operator<<(std::ostream &stream, const ValidationReport &report) {
 
 
     stream << "Affected variables:\n";
-    for (size_t incorrectVar: report.incorrect_vars) {
-        stream << "X_" << incorrectVar << "; ";
+    for (size_t incorrect_var: report.incorrect_vars) {
+        stream << "X_" << incorrect_var << "; ";
     }
     stream << std::endl;
 
@@ -147,7 +147,7 @@ private:
     std::vector<size_t> basic_indices;
     std::vector<T> basic_coeffs;
 
-    void validateOnStart() {
+    void validate_on_start() {
         std::vector<size_t> checked_base_vars;
 
         for (size_t idx = 0; idx < A.get_columns(); idx++) {
@@ -326,7 +326,7 @@ public:
             coefficients), A(A), b(b), basic_indices(
             basic_indices), basic_coeffs() {
         is_correct_input = true;
-        validateOnStart();
+        validate_on_start();
         for (const size_t &idx: basic_indices) {
             basic_coeffs.push_back(func[idx]);
         }
