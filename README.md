@@ -11,4 +11,4 @@
   | 1 2 3 | Vector of values of the constraints |
   | 4 5 6 | Indexes of the base variables, chosen by the user (starting from 0), |
 
-![Build Status](https://github.com/F23-Optimization-assignments/Assignment1/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/F23-Optimization-assignments/Assignment1/actions/workflows/ci.yml/badge.svg)
