@@ -1,3 +1,5 @@
 /cmake-build-debug/
 /cmake-build-g/
 /cmake-build-debug-g/
+.idea
+.gitignore
