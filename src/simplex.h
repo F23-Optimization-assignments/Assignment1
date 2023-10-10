@@ -6,10 +6,12 @@
 #include "matrix.h"
 #include "vector_ops.h"
 
-#define MALFORMED_INPUT 0
-#define DEGENERACY 1
-#define ALTERNATIVE_OPTIMA 2
-#define UNBOUNDED 3
+enum SpecialCase {
+    MALFORMED_INPUT,
+    DEGENERACY,
+    ALTERNATIVE_OPTIMA,
+    UNBOUNDED
+};
 
 class ValidationReport {
 private:
@@ -137,10 +139,15 @@ std::ostream &operator<<(std::ostream &stream, const Solution<U> &solution) {
     return stream;
 }
 
+enum Objective {
+    MIN, MAX
+};
+
 template<typename T>
 class Simplex {
 private:
     bool is_correct_input;
+    Objective obj;
     std::vector<T> func;
     Matrix<T> A;
     std::vector<T> b;
@@ -208,13 +215,30 @@ private:
     }
 
     [[nodiscard]] std::optional<size_t> find_pivot_col(const std::vector<T> &v) const {
-        std::optional<size_t> max_idx;
-        for (size_t idx = 0; idx < v.size(); ++idx) {
-            if (v[idx] > 0 && (!max_idx || v[max_idx.value()] < v[idx])) {
-                max_idx = idx;
+        std::optional<size_t> pivotIdx;
+        switch (obj) {
+
+            case MIN: {
+                for (size_t idx = 0; idx < v.size(); ++idx) {
+                    if (v[idx] > 0 && (!pivotIdx || v[pivotIdx.value()] < v[idx])) {
+                        pivotIdx = idx;
+                    }
+                }
+                break;
             }
+
+            case MAX: {
+                for (size_t idx = 0; idx < v.size(); ++idx) {
+                    if (v[idx] < 0 && (!pivotIdx || v[pivotIdx.value()] > v[idx])) {
+                        pivotIdx = idx;
+                    }
+                }
+                break;
+            }
+
         }
-        return max_idx;
+
+        return pivotIdx;
     }
 
     [[nodiscard]] std::optional<size_t> find_pivot_row(size_t col) const {
@@ -319,10 +343,11 @@ private:
     }
 
 public:
-    Simplex(const std::vector<T> &coefficients,
+    Simplex(const Objective &obj,
+            const std::vector<T> &coefficients,
             const Matrix<T> &A,
             const std::vector<T> &b,
-            const std::vector<size_t> &basic_indices) : func(
+            const std::vector<size_t> &basic_indices) : obj(obj), func(
             coefficients), A(A), b(b), basic_indices(
             basic_indices), basic_coeffs() {
         is_correct_input = true;
@@ -335,11 +360,9 @@ public:
 
     Solution<T> find_solution() {
         Solution<T> solution;
-
         if (!is_correct_input) {
             return Solution<T>();
         }
-
         do {
             solution = iterate();
         } while (!solution.is_final());
